@@ -1,15 +1,32 @@
-// A small change to trigger a new build
-
-
 "use client";
 
 import { useState } from "react";
 
+// --- THE FIX: We are defining the exact "shape" of our data ---
+interface Turn {
+  persona: string;
+  argument: string;
+}
+
+interface Judgment {
+  winner: string;
+  justification: string;
+}
+
+interface DebateResult {
+  transcript: Turn[];
+  judgment: Judgment;
+}
+// --- END FIX ---
+
 export default function HomePage() {
   const [topic, setTopic] = useState("");
-  const [debateResult, setDebateResult] = useState(null);
+  
+  // --- THE FIX: We tell TypeScript the state can be DebateResult OR null ---
+  const [debateResult, setDebateResult] = useState<DebateResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  // --- THE FIX: We tell TypeScript the state can be a string OR null ---
+  const [error, setError] = useState<string | null>(null);
 
   const handleDebate = async () => {
     setIsLoading(true);
@@ -65,7 +82,6 @@ export default function HomePage() {
           <div className="w-full mt-8">
             {/* The Transcript */}
             <div className="space-y-6">
-              {/* @ts-ignore */}
               {debateResult.transcript.map((turn, index) => (
                 <div key={index} className={`flex flex-col ${turn.persona === 'Proponent' ? 'items-start' : 'items-end'}`}>
                   <div className={`p-4 rounded-lg max-w-xl ${turn.persona === 'Proponent' ? 'bg-blue-900 bg-opacity-40' : 'bg-purple-900 bg-opacity-40'}`}>
@@ -79,10 +95,8 @@ export default function HomePage() {
             {/* The Judgment */}
             <div className="mt-12 p-6 bg-gray-800 border-2 border-yellow-500 rounded-lg shadow-2xl">
               <h2 className="text-2xl font-bold text-center text-yellow-400">The Verdict</h2>
-              {/* @ts-ignore */}
               <p className="mt-4 text-center text-xl font-semibold">Winner: <span className="text-yellow-300">{debateResult.judgment.winner}</span></p>
               <p className="mt-2 text-center text-gray-400 italic">Justification:</p>
-              {/* @ts-ignore */}
               <p className="mt-2 text-center text-gray-300">{debateResult.judgment.justification}</p>
             </div>
           </div>
