@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-// --- THE FIX: We are defining the exact "shape" of our data ---
 interface Turn {
   persona: string;
   argument: string;
@@ -14,18 +13,15 @@ interface Judgment {
 }
 
 interface DebateResult {
+  topic: string; // Added topic here
   transcript: Turn[];
   judgment: Judgment;
 }
-// --- END FIX ---
 
 export default function HomePage() {
   const [topic, setTopic] = useState("");
-  
-  // --- THE FIX: We tell TypeScript the state can be DebateResult OR null ---
   const [debateResult, setDebateResult] = useState<DebateResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  // --- THE FIX: We tell TypeScript the state can be a string OR null ---
   const [error, setError] = useState<string | null>(null);
 
   const handleDebate = async () => {
@@ -52,6 +48,33 @@ export default function HomePage() {
     }
   };
 
+  const handleDownloadLogs = async () => {
+    try {
+      const response = await fetch("/api/logs");
+      if (!response.ok) {
+        throw new Error("Failed to fetch logs.");
+      }
+      const logs = await response.json();
+      
+      // Create a Blob from the JSON data
+      const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+      
+      // Create a temporary URL for the Blob and click it to trigger download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dialectica_debate_logs.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url); // Clean up the URL
+      
+    } catch (err) {
+      setError(`Download failed: ${(err as Error).message}`);
+    }
+  };
+
+
   return (
     <main className="flex flex-col items-center min-h-screen p-4 sm:p-8 bg-gray-900 text-white">
       <div className="w-full max-w-3xl">
@@ -72,6 +95,12 @@ export default function HomePage() {
             className="w-full px-4 py-3 mt-4 font-semibold text-gray-900 bg-cyan-400 rounded-md shadow-md hover:bg-cyan-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? "Debating..." : "Start Debate"}
+          </button>
+          <button
+            onClick={handleDownloadLogs}
+            className="w-full px-4 py-2 mt-2 font-semibold text-gray-900 bg-gray-300 rounded-md shadow-md hover:bg-gray-400 transition-colors"
+          >
+            Download All Logs
           </button>
         </div>
 
