@@ -1,4 +1,4 @@
-// This is the file: app/api/debate/route.js
+// This is the updated file: app/api/debate/route.js
 import { kv } from '@vercel/kv';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createHash } from 'crypto';
@@ -83,8 +83,21 @@ ${finalTranscript}
     const judgment = JSON.parse(judgeResponseText);
 
     // Combine results and save to cache
-    const finalResult = { transcript, judgment };
+    const finalResult = { topic, transcript, judgment }; // Added topic to finalResult
     await kv.set(cacheKey, finalResult, { ex: 86400 }); // Cache for 24 hours
+
+    // --- NEW LOGGING: Save full debate to a long-term log list ---
+    const logEntry = {
+      id: cacheKey, // Unique ID
+      timestamp: new Date().toISOString(),
+      topic: topic,
+      transcript: transcript,
+      judgment: judgment
+    };
+    await kv.lpush('debate_logs', JSON.stringify(logEntry));
+    await kv.ltrim('debate_logs', 0, 99); // Keep only the last 100 debates in the log
+    console.log("Logged debate to history.");
+    // --- END NEW LOGGING ---
 
     return new Response(JSON.stringify(finalResult), { status: 200 });
 
